@@ -4,26 +4,29 @@ from sklearn.metrics import mean_absolute_error
 import torch
 import torch.nn as nn
 import scipy.sparse as sp
-import numpy as np
 
 
 class RegressionMLP(nn.Module):
 
     def __init__(self, input_size, hidden_size, output_size):
         super().__init__()
-        # 3 linear layers
+        # Initialize the neural network architecture
+        # Three linear layers (fully connected layers)
         self.fc1 = nn.Linear(input_size, hidden_size)
         self.fc2 = nn.Linear(hidden_size, hidden_size)
         self.fc3 = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
+        # Check if the input is sparse, and convert it to a PyTorch Tensor if needed
         if sp.issparse(x):
             x = torch.Tensor(x.toarray())
 
+        # Flatten the input tensor, making it one-dimensional
         y = torch.flatten(x,1) #y is one-dimensional
 
-        y = nn.GELU()(self.fc1(y))
-        y = nn.GELU()(self.fc2(y))
+        # Pass the flattened input through three linear layers with GELU activation
+        y = nn.ReLU()(self.fc1(y))
+        y = nn.ReLU()(self.fc2(y))
         y = self.fc3(y)
 
         return y
@@ -31,19 +34,26 @@ class RegressionMLP(nn.Module):
     def fit(self, x_train, y_train,epochs=1000, learning_rate=0.01, weight_decay=0.001, loss_function=torch.nn.MSELoss()):
         optimizer = torch.optim.Adam(self.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
+        # Convert sparse input data to PyTorch Tensor if needed
         if sp.issparse(x_train):
             x_train = torch.Tensor(x_train.toarray())
+
+        # Convert target data to PyTorch Tensor
         y_train = torch.tensor(y_train, dtype=torch.float32)
 
+        # Training loop
         for epoch in range(epochs):
+            # Forward pass to make predictions
             y_pred = self(x_train)
+            # Calculate the loss using the specified loss function
             loss = loss_function(y_pred, y_train)
 
+            # Zero the gradients, perform backpropagation, and update model parameters
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
-            print("epoch " + str(epoch) +": done")
+            print("epoch " + str(epoch))
 
 
 
@@ -90,12 +100,13 @@ X = vectorizer.fit_transform(X_text)
 # Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
 
-# Create a Linear Regression model
+# Create a MLP model
 mlp = RegressionMLP(25,32,1)
+# Batch Normalization
+mlp.BatchNorm2d = torch.nn.BatchNorm2d(4)
 
 # Train the model on the training data
 mlp.fit(X_train, y_train)
-
 
 # Make predictions on the testing data
 y_pred_mlp = mlp(X_test)
