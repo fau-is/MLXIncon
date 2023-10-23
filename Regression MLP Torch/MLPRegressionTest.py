@@ -114,7 +114,7 @@ y_pred_mlp = mlp(X_test)
 # Evaluate the model
 with torch.no_grad():
     mae = mean_absolute_error(y_test, y_pred_mlp)
-    print(f"Mean Absolute Error Linear Reg.: {mae}")
+    print(f"Mean Absolute Error MLP Reg.: {mae}")
 
 
     print()
@@ -124,4 +124,4 @@ with torch.no_grad():
     print(f'Example {new_input_text}')
     new_input = vectorizer.transform(new_input_text)
     predicted_value = mlp(new_input)
-    print(f"Predicted Value Linear Reg.: {predicted_value[0]}")
+    print(f"Predicted Value MLP Reg.: {predicted_value[0]}")
