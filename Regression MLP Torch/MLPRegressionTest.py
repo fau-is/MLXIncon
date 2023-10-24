@@ -9,12 +9,12 @@ import scipy.sparse as sp
 class RegressionMLP(nn.Module):
 
     def __init__(self, input_size, hidden_size, output_size):
-        super().__init__()
         # Initialize the neural network architecture
-        # Three linear layers (fully connected layers)
+        super().__init__()
+
         self.fc1 = nn.Linear(input_size, hidden_size)
-        self.fc2 = nn.Linear(hidden_size, hidden_size)
-        self.fc3 = nn.Linear(hidden_size, output_size)
+        self.relu = nn.ReLU()
+        self.fc2 = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
         # Check if the input is sparse, and convert it to a PyTorch Tensor if needed
@@ -24,15 +24,15 @@ class RegressionMLP(nn.Module):
         # Flatten the input tensor, making it one-dimensional
         y = torch.flatten(x,1) #y is one-dimensional
 
-        # Pass the flattened input through three linear layers with GELU activation
-        y = nn.ReLU()(self.fc1(y))
-        y = nn.ReLU()(self.fc2(y))
-        y = self.fc3(y)
+        # Pass the flattened input through three linear layers
+        y = self.fc1(y)
+        y = self.relu(y)
+        y = self.fc2(y)
 
         return y
 
     def fit(self, x_train, y_train,epochs=1000, learning_rate=0.01, weight_decay=0.001, loss_function=torch.nn.MSELoss()):
-        optimizer = torch.optim.Adam(self.parameters(), lr=learning_rate, weight_decay=weight_decay)
+        optimizer = torch.optim.NAdam(self.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
         # Convert sparse input data to PyTorch Tensor if needed
         if sp.issparse(x_train):
@@ -106,15 +106,21 @@ mlp = RegressionMLP(25,32,1)
 mlp.BatchNorm2d = torch.nn.BatchNorm2d(4)
 
 # Train the model on the training data
-mlp.fit(X_train, y_train)
+mlp.fit(X_train, y_train, epochs=10)
 
 # Make predictions on the testing data
 y_pred_mlp = mlp(X_test)
+
+# Make predictions on the training data
+train_y_pred_mlp = mlp(X_train)
 
 # Evaluate the model
 with torch.no_grad():
     mae = mean_absolute_error(y_test, y_pred_mlp)
     print(f"Mean Absolute Error MLP Reg.: {mae}")
+
+    mae_train = mean_absolute_error(y_train, train_y_pred_mlp)
+    print(f"Mean Absolute Error MLP Reg on training Data: {mae_train}")
 
 
     print()
