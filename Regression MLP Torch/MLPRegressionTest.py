@@ -13,8 +13,18 @@ class RegressionMLP(nn.Module):
         super().__init__()
 
         self.fc1 = nn.Linear(input_size, hidden_size)
-        self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(hidden_size, output_size)
+
+        self.tanh1 = nn.Tanh()
+        self.hidden_layer_1 = nn.Linear(hidden_size, hidden_size)
+
+        #self.tanh2 = nn.Tanh()
+        #self.hidden_layer_2 = nn.Linear(hidden_size, hidden_size)
+
+        #self.tanh3 = nn.Tanh()
+        #self.hidden_layer_3 = nn.Linear(hidden_size, hidden_size)
+
+        self.tanh4 = nn.Tanh()
+        self.fc3 = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
         # Check if the input is sparse, and convert it to a PyTorch Tensor if needed
@@ -25,9 +35,10 @@ class RegressionMLP(nn.Module):
         y = torch.flatten(x,1) #y is one-dimensional
 
         # Pass the flattened input through three linear layers
-        y = self.fc1(y)
-        y = self.relu(y)
-        y = self.fc2(y)
+        y = self.hidden_layer_1(self.tanh1(self.fc1(y)))
+        #y = self.hidden_layer_2(self.tanh2(y))
+        #y = self.hidden_layer_3(self.tanh3(y))
+        y = self.fc3(self.tanh4(y))
 
         return y
 
@@ -53,7 +64,7 @@ class RegressionMLP(nn.Module):
             loss.backward()
             optimizer.step()
 
-            print("epoch " + str(epoch))
+            #print("epoch " + str(epoch))
 
 
 
@@ -100,34 +111,44 @@ X = vectorizer.fit_transform(X_text)
 # Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
 
-# Create a MLP model
-mlp = RegressionMLP(25,32,1)
-# Batch Normalization
-mlp.BatchNorm2d = torch.nn.BatchNorm2d(4)
+lrs = [0.01, 0.05, 0.1]
+epochs = [10, 100, 500]
+wds = [0.001, 0.005, 0.01]
 
-# Train the model on the training data
-mlp.fit(X_train, y_train, epochs=10)
+for lr in lrs:
+    for epoch in epochs:
+        for wd in wds:
+            # Create a MLP model
+            mlp = RegressionMLP(25,32,1)
+            # Batch Normalization
+            #mlp.BatchNorm2d = torch.nn.BatchNorm2d(4)
 
-# Make predictions on the testing data
-y_pred_mlp = mlp(X_test)
+            # Train the model on the training data
+            mlp.fit(X_train, y_train, epochs=100)
 
-# Make predictions on the training data
-train_y_pred_mlp = mlp(X_train)
+            # Make predictions on the testing data
+            y_pred_mlp = mlp(X_test)
 
-# Evaluate the model
-with torch.no_grad():
-    mae = mean_absolute_error(y_test, y_pred_mlp)
-    print(f"Mean Absolute Error MLP Reg.: {mae}")
+            # Make predictions on the training data
+            train_y_pred_mlp = mlp(X_train)
 
-    mae_train = mean_absolute_error(y_train, train_y_pred_mlp)
-    print(f"Mean Absolute Error MLP Reg on training Data: {mae_train}")
+            # Evaluate the model
+            print("lr: " + str(lr) + " | epochs: " + str(epoch) + " | wd: " + str(wd))
+            with torch.no_grad():
+                mae = mean_absolute_error(y_test, y_pred_mlp)
+                print(f"Mean Absolute Error MLP Reg.: {mae}")
+
+                mae_train = mean_absolute_error(y_train, train_y_pred_mlp)
+                print(f"Mean Absolute Error MLP Reg on training Data: {mae_train}")
 
 
-    print()
-# Now, you can use the trained model to predict the value for new sets of propositional logic formulas as text
-# Replace 'new_input_text' with your new input data
-    new_input_text = ["!a&&!b b"]  # Example input
-    print(f'Example {new_input_text}')
-    new_input = vectorizer.transform(new_input_text)
-    predicted_value = mlp(new_input)
-    print(f"Predicted Value MLP Reg.: {predicted_value[0]}")
+                print()
+            # Now, you can use the trained model to predict the value for new sets of propositional logic formulas as text
+            # Replace 'new_input_text' with your new input data
+            new_input_text = ["!a&&!b b"]  # Example input
+            print(f'Example {new_input_text}')
+            new_input = vectorizer.transform(new_input_text)
+            predicted_value = mlp(new_input)
+            print(f"Predicted Value MLP Reg.: {predicted_value[0]}")
+
+            print("--- --- --- --- --- ---")
