@@ -4,6 +4,7 @@ from sklearn.metrics import mean_absolute_error
 import torch
 import torch.nn as nn
 import scipy.sparse as sp
+import pandas as pd
 
 
 class RegressionMLP(nn.Module):
@@ -111,8 +112,15 @@ X = vectorizer.fit_transform(X_text)
 # Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
 
+result = pd.DataFrame({"leanring_rate":[],
+                       "epochs":[],
+                       "weight_decay":[],
+                       "MAE":[],
+                       "MAE on Trainingdata":[]}
+                      )
+
 lrs = [0.01, 0.05, 0.1]
-epochs = [10, 100, 500]
+epochs = [10, 100, 250]
 wds = [0.001, 0.005, 0.01]
 
 for lr in lrs:
@@ -151,4 +159,16 @@ for lr in lrs:
             predicted_value = mlp(new_input)
             print(f"Predicted Value MLP Reg.: {predicted_value[0]}")
 
+            temp = pd.DataFrame({"leanring_rate" : [lr],
+                       "epochs" : [epoch],
+                       "weight_decay" : [wd],
+                       "MAE" : [mae],
+                       "MAE on Trainingdata" : [mae_train]})
+
+            result = pd.concat([result, temp])
+            print(result)
+
             print("--- --- --- --- --- ---")
+
+#result.to_excel(r"C:\Users\ReneJ\Desktop\Uni\Job\mlprt.xlsx")
+result.to_csv(r"")
