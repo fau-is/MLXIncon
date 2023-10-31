@@ -4,7 +4,7 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import mean_absolute_error
 import numpy as np
 
-filename ="../datasets/10T-kbs__MI-measure__max-3-atoms__max-5-elements.txt"
+filename ="../datasets/1T-kbs__MI-measure__max-3-atoms__max-5-elements.txt"
 
 
 def read_input_file(filename):
