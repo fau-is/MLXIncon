@@ -4,7 +4,7 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import mean_absolute_error
 import numpy as np
 
-filename ="../datasets/10T-kbs__MI-measure__max-3-atoms__max-5-elements.txt"
+filename ="../datasets/1T-kbs__MI-measure__max-3-atoms__max-5-elements.txt"
 
 
 def read_input_file(filename):
@@ -73,7 +73,7 @@ print(f"Mean Absolute Error Logistic Reg.: {mae2}")
 print()
 # Now, you can use the trained model to predict the value for new sets of propositional logic formulas as text
 # Replace 'new_input_text' with your new input data
-new_input_text = ["!a&&!b b"]  # Example input
+new_input_text = ["!a&&b !b"]  # Example input
 print(f'Example {new_input_text}')
 new_input = vectorizer.transform(new_input_text)
 predicted_value = model_linear.predict(new_input)
