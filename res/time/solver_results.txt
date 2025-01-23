@@ -1,0 +1,10 @@
+files\1T-kbs__max-3-atoms__max-10-elements__with-flags.txt 234350 milliseconds
+files\1T-kbs__max-3-atoms__max-15-elements__with-flags.txt 2080243 milliseconds
+files\1T-kbs__max-3-atoms__max-5-elements__with-flags.txt 31195 milliseconds
+files\1T-kbs__max-6-atoms__max-10-elements__with-flags.txt 450518 milliseconds
+files\1T-kbs__max-6-atoms__max-15-elements__with-flags.txt 5757570 milliseconds
+files\1T-kbs__max-6-atoms__max-5-elements__with-flags.txt 34938 milliseconds
+files\1T-kbs__max-9-atoms__max-10-elements__with-flags.txt 652805 milliseconds
+files\1T-kbs__max-9-atoms__max-15-elements__with-flags.txt 8626182 milliseconds
+files\1T-kbs__max-9-atoms__max-5-elements__with-flags.txt 34741 milliseconds
+files\test.txt 666 milliseconds
