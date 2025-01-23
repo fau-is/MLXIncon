@@ -26,25 +26,35 @@ class RegressionMLP(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super().__init__()
         self.fc1 = nn.Linear(input_size, hidden_size)
-        self.tanh1 = nn.Tanh()
+        #self.bn1 = nn.BatchNorm1d(hidden_size)
+        self.tanh1 = nn.ReLU()  # nn.LeakyReLU() #
+        self.dropout1 = nn.Dropout(p=0.2)
         self.fc2 = nn.Linear(hidden_size, hidden_size)
-        self.tanh2 = nn.Tanh()
+        #self.bn2 = nn.BatchNorm1d(hidden_size)
+        self.tanh2 = nn.ReLU() # nn.LeakyReLU() #
+        self.dropout2 = nn.Dropout(p=0.2)
         self.fc3 = nn.Linear(hidden_size, output_size)
         self.loss_val = np.inf
 
     def forward(self, x):
         out = self.fc1(x)
+        #out = self.bn1(out)
         out = self.tanh1(out)
+        out = self.dropout1(out)
         out = self.fc2(out)
+        #out = self.bn2(out)
         out = self.tanh2(out)
+        out = self.dropout2(out)
         out = self.fc3(out)
 
         return out
 
     def fit(self, x_train, y_train, x_val, y_val,
-            patients=10, epochs=100, learning_rate=0.001, weight_decay=0.001):
+            patients=10, epochs=1000, learning_rate=0.001, weight_decay=0.001):
 
-        optimizer = torch.optim.Adam(self.parameters(), lr=learning_rate, weight_decay=weight_decay)
+        optimizer = torch.optim.Adam(self.parameters(), lr=learning_rate, weight_decay=weight_decay)  # L2 penalty
+
+        #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.1)
 
         # Convert target data to PyTorch Tensor
         y_train = y_train.clone().detach()
@@ -74,6 +84,8 @@ class RegressionMLP(nn.Module):
                 print("Early stopping at epoch:", epoch)
                 break
 
+            #scheduler.step()
+
         self.loss_val = loss_val
 
 
@@ -81,18 +93,26 @@ class RegressionMLPNS(nn.Module):
     def __init__(self, input_size, hidden_size, output_size, target):
         super().__init__()
         self.fc1 = nn.Linear(input_size, hidden_size)
-        self.tanh1 = nn.Tanh()
+        #self.bn1 = nn.BatchNorm1d(hidden_size)
+        self.tanh1 = nn.ReLU()  #nn.LeakyReLU()
+        self.dropout1 = nn.Dropout(p=0.2)
         self.fc2 = nn.Linear(hidden_size, hidden_size)
-        self.tanh2 = nn.Tanh()
+        #self.bn2 = nn.BatchNorm1d(hidden_size)
+        self.tanh2 = nn.ReLU()  # nn.LeakyReLU() #
+        self.dropout2 = nn.Dropout(p=0.2)
         self.fc3 = nn.Linear(hidden_size, output_size)
         self.loss_val = np.inf
         self.target = target
 
     def forward(self, x, x_flags):
         out = self.fc1(x)
+        #out = self.bn1(out)
         out = self.tanh1(out)
+        out = self.dropout1(out)
         out = self.fc2(out)
+        #out = self.bn2(out)
         out = self.tanh2(out)
+        out = self.dropout2(out)
         out = self.fc3(out)
 
         return out
@@ -101,7 +121,7 @@ class RegressionMLPNS(nn.Module):
         """Calculates the custom loss for the mi measure"""
 
         # Prediction loss
-        l_n = torch.nn.L1Loss()
+        l_n = torch.nn.L1Loss() #torch.nn.MSELoss()  # torch.nn.L1Loss()
         l_n = l_n(y_train_pred, y_train)
 
         # Con flag loss
@@ -117,21 +137,22 @@ class RegressionMLPNS(nn.Module):
         ub_flag_sum = 0
 
         # Prediction loss
-        l_n = torch.nn.L1Loss()
+        l_n = torch.nn.L1Loss()  # torch.nn.MSELoss()  #torch.nn.L1Loss()
         l_n = l_n(y_train_pred, y_train)
 
         # Con flag loss
         l_con = x_train_flags[:, 0]
 
         # UB flag loss
+        ub_losses = []
         for i in range(0, num_ub_flags):
             ub_flags.append([i for i in np.array(x_train_flags[:, 1 + i])])
-            ub_flag_sum += sum(ub_flags[i]) / len(ub_flags[i]) * l_n
+            ub_losses.append(sum(ub_flags[i]) / len(ub_flags[i]) * l_n)
 
-        return l_n + (sum(l_con) / len(l_con)) * l_n + ub_flag_sum
+        return l_n + (sum(l_con) / len(l_con)) * l_n + (sum(ub_losses)) / len(ub_losses)
 
     def fit(self, x_train, x_train_flags, y_train, x_val, x_val_flags, y_val,
-            patients=10, epochs=1000, learning_rate=0.01, weight_decay=0.001):
+            patients=10, epochs=1000, learning_rate=0.001, weight_decay=0.001):
 
         optimizer = torch.optim.Adam(self.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
@@ -158,7 +179,10 @@ class RegressionMLPNS(nn.Module):
             # Validation
             with torch.no_grad():
                 y_val_pred = self(x_val, x_val_flags)
-                loss_val = self.custom_loss_at(y_val_pred, y_val, x_val_flags)
+                if self.target == "AT":
+                    loss_val = self.custom_loss_at(y_val_pred, y_val, x_val_flags)
+                else:
+                    loss_val = self.custom_loss_mi(y_val_pred, y_val, x_val_flags)
 
             # Early stopping
             early_stopping(loss_val)

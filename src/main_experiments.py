@@ -15,18 +15,28 @@ import os
 import time
 
 
-def preprocess_data(dataset_name):
+def preprocess_data(dataset_name, measure):
     def read_input_file(filename):
         d = []
         # Open the file for reading
         with open(filename, 'r') as file:
             for line in file:
-                line = line.strip()
 
-                content, value = line.split(',', 1)
+                # Split line
+                line = line.strip()
+                content, mi_value, at_value = line.split(',', 2)
 
                 # Remove the parentheses and leading/trailing whitespace from the content
                 content = content.strip()[2:-1]
+
+                # Select value and adapt content
+                if measure == 'MI':
+                    value = mi_value
+                    # assumption: max. number of atoms = 6
+                    content = content[:-14]
+                else:
+                    value = at_value
+
                 # Convert the value to a float
                 value = float(value.strip()[0:-1])
 
@@ -48,7 +58,8 @@ def preprocess_data(dataset_name):
 
     # Use CountVectorizer to convert the text data into numerical features
     vectorizer = CountVectorizer(binary=True,
-                                 tokenizer=custom_tokenizer)  # Use binary encoding (1 for presence, 0 for absence)
+                                 tokenizer=custom_tokenizer,
+                                 token_pattern=None)  # Use binary encoding (1 for presence, 0 for absence)
     X = vectorizer.fit_transform(X_text)
     X = torch.Tensor(X.toarray())
     y = torch.Tensor(y)
@@ -56,7 +67,7 @@ def preprocess_data(dataset_name):
     return X, y
 
 
-def evaluate(X, y, seed, hpos, hpo, num_feat, data_set_name, mode):
+def evaluate(X, y, seed, hpos, hpo, num_feat, data_set_name, mode, measure):
     """
     Method starting the evaluation pipeline
     """
@@ -68,8 +79,8 @@ def evaluate(X, y, seed, hpos, hpo, num_feat, data_set_name, mode):
     mae_train, mae_val, mae_test = list(), list(), list()
     r2_train, r2_val, r2_test = list(), list(), list()
     training_time, inference_time, total_time = list(), list(), list()
-    data_set_name = data_set_name[23:]
-    target = data_set_name[8:10]
+    data_set_name = data_set_name[28:]
+    target = measure
 
     for train, test in sk.split(X=X, y=y):
 
@@ -77,7 +88,7 @@ def evaluate(X, y, seed, hpos, hpo, num_feat, data_set_name, mode):
         X_test = X[test]
         y_train = y[train]
         y_test = y[test]
-        X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.1111, random_state=seed)
+        X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.1111, random_state=seed)  # 0.1111
 
         """
         import matplotlib.pyplot as plt
@@ -130,13 +141,13 @@ def evaluate(X, y, seed, hpos, hpo, num_feat, data_set_name, mode):
                                 y_pred = model(X_val, X_val[:, num_feat:])
                                 y_val = y_val.detach().numpy()
                                 y_pred = y_pred.detach().numpy()
-                                val_mae = mean_absolute_error(y_true=y_val, y_pred=y_pred)
+                                val_mae = mean_absolute_error(y_true=y_val, y_pred=y_pred)  #mean_squared_error(y_true=y_val, y_pred=y_pred) #
                                 y_val = torch.tensor(y_val)
                             else:
                                 y_pred = model(X_val)
                                 y_val = y_val.detach().numpy()
                                 y_pred = y_pred.detach().numpy()
-                                val_mae = mean_absolute_error(y_true=y_val, y_pred=y_pred)
+                                val_mae = mean_absolute_error(y_true=y_val, y_pred=y_pred)  # mean_squared_error(y_true=y_val, y_pred=y_pred) #
                                 y_val = torch.tensor(y_val)
 
                             if val_mae < best_val_score:
@@ -147,9 +158,9 @@ def evaluate(X, y, seed, hpos, hpo, num_feat, data_set_name, mode):
                             model = best_model
 
             else:
-                learning_rate = 0.01
-                weight_decay = 0.002
-                hidden_size = 128
+                learning_rate = 0.005
+                weight_decay = 0.05
+                hidden_size = 512
 
                 if "mlp_flags_model" in mode:
 
@@ -169,7 +180,7 @@ def evaluate(X, y, seed, hpos, hpo, num_feat, data_set_name, mode):
             if hpo:
 
                 model = LinearRegression().fit(X_train, y_train)
-                val_mae = mean_absolute_error(y_true=y_val, y_pred=model.predict(X_val))
+                val_mae =  mean_absolute_error(y_true=y_val, y_pred=model.predict(X_val))  #mean_squared_error(y_true=y_val, y_pred=model.predict(X_val))
 
                 if val_mae < best_val_score:
                     best_val_score = val_mae
@@ -186,7 +197,7 @@ def evaluate(X, y, seed, hpos, hpo, num_feat, data_set_name, mode):
                 for reg_strength in hpos["lasso"]["reg_strength"]:
 
                     model = Lasso(alpha=reg_strength, random_state=seed).fit(X_train, y_train)
-                    val_mae = mean_absolute_error(y_true=y_val, y_pred=model.predict(X_val))
+                    val_mae = mean_absolute_error(y_true=y_val, y_pred=model.predict(X_val))  # mean_squared_error(y_true=y_val, y_pred=model.predict(X_val))  #
 
                     if val_mae < best_val_score:
                         best_val_score = val_mae
@@ -203,7 +214,7 @@ def evaluate(X, y, seed, hpos, hpo, num_feat, data_set_name, mode):
                 for reg_strength in hpos["ridge"]["reg_strength"]:
 
                     model = Ridge(alpha=reg_strength, random_state=seed).fit(X_train, y_train)
-                    val_mae = mean_absolute_error(y_true=y_val, y_pred=model.predict(X_val))
+                    val_mae = mean_absolute_error(y_true=y_val, y_pred=model.predict(X_val))  #mean_squared_error(y_true=y_val, y_pred=model.predict(X_val))  #
 
                     if val_mae < best_val_score:
                         best_val_score = val_mae
@@ -218,7 +229,7 @@ def evaluate(X, y, seed, hpos, hpo, num_feat, data_set_name, mode):
 
         print(f'Best params: {best_paras}')
 
-        with open(f'../res/hpo/results_{data_set_name}_{mode}_hpos.csv', 'a+') as fd:
+        with open(f'../res/hpo/results_{measure}_{data_set_name}_{mode}_hpos.csv', 'a+') as fd:
             fd.write(f'{best_paras}\n')
 
         pickle.dump(model, open(f'../model/{mode}_{idx}.sav', 'wb'))
@@ -271,8 +282,8 @@ def evaluate(X, y, seed, hpos, hpo, num_feat, data_set_name, mode):
     print(f'inference time -- mean: {sum(inference_time) / len(inference_time)} -- sd: {np.std(inference_time)} -- values: {inference_time}')
     print(f'total time -- mean: {sum(total_time) / len(total_time)} -- sd: {np.std(total_time)} -- values: {total_time}')
 
-    if not os.path.exists(f'../res/results_{data_set_name}.csv'):
-        with open(f'../res/results_{data_set_name}.csv', 'w') as fd:
+    if not os.path.exists(f'../res/results_{measure}_{data_set_name}.csv'):
+        with open(f'../res/results_{measure}_{data_set_name}.csv', 'w') as fd:
             fd.write('algorithm; seed; tuned; '
                  'mse train avg; mse train std; mse train values; mse val avg; mse val std; mse val values; mse test avg; mse test std; mse test values; '
                  'mae train avg; mae train std; mae train values; mae val avg; mae val std; mae val values; mae test avg; mae test std; mae test values; '
@@ -282,7 +293,7 @@ def evaluate(X, y, seed, hpos, hpo, num_feat, data_set_name, mode):
                  'total time avg; total time std; total time values '
                  '\n')
 
-    with open(f'../res/results_{data_set_name}.csv', 'a') as fd:
+    with open(f'../res/results_{measure}_{data_set_name}.csv', 'a') as fd:
         fd.write(
             f'{mode};{seed};{hpo};'
             f'{sum(mse_train) / len(mse_train)}; {np.std(mse_train)}; {mse_train};'
@@ -304,11 +315,43 @@ if __name__ == "__main__":
 
     hpo = True
     seed = 42
-    modes = ["lr_flags_data", "lr_no_flags", "ridge_flags_data", "ridge_no_flags", "lasso_flags_data", "lasso_no_flags"
-             "mlp_no_flags", "mlp_flags_data", "mlp_flags_model"]
+    # "lr_flags_data", "lr_no_flags", "ridge_flags_data", "ridge_no_flags", "lasso_flags_data", "lasso_no_flags"
+    # "mlp_no_flags", "mlp_flags_data", "mlp_flags_model"
+    # "lr_flags_data", "lr_no_flags", "ridge_flags_data", "ridge_no_flags", "lasso_flags_data", "lasso_no_flags"
+    modes = ["lr_flags_data", "lr_no_flags", "ridge_flags_data", "ridge_no_flags", "lasso_flags_data", "lasso_no_flags", "mlp_no_flags", "mlp_flags_data", "mlp_flags_model"]
     torch.manual_seed(seed)
     np.random.seed(seed=seed)
 
+    data_set_names = [
+        "../datasets/datasets_2025_3/1T-kbs__max-9-atoms__max-15-elements__with-flags_V2.txt",
+    ]
+
+    """
+    data_set_names = [
+        "../datasets/datasets_2025_2/1T-kbs__max-3-atoms__max-5-elements__with-flags.txt",
+        "../datasets/datasets_2025_2/1T-kbs__max-3-atoms__max-10-elements__with-flags.txt",
+        "../datasets/datasets_2025_2/1T-kbs__max-3-atoms__max-15-elements__with-flags.txt",
+        "../datasets/datasets_2025_2/1T-kbs__max-6-atoms__max-5-elements__with-flags.txt",
+        "../datasets/datasets_2025_2/1T-kbs__max-6-atoms__max-10-elements__with-flags.txt",
+        "../datasets/datasets_2025_2/1T-kbs__max-6-atoms__max-15-elements__with-flags.txt",
+        "../datasets/datasets_2025_2/1T-kbs__max-9-atoms__max-5-elements__with-flags.txt",
+        "../datasets/datasets_2025_2/1T-kbs__max-9-atoms__max-10-elements__with-flags.txt",
+        "../datasets/datasets_2025_2/1T-kbs__max-9-atoms__max-15-elements__with-flags.txt",
+    ]
+    """
+
+    """
+        data_set_names = [
+        "../datasets/datasets_2025/1T-kbs__max-3-atoms__max-5-elements__with-flags.txt",
+        "../datasets/datasets_2025/1T-kbs__max-3-atoms__max-5-elements__with-flags_HIGH_CONJUNCTION.txt",
+        "../datasets/datasets_2025/1T-kbs__max-3-atoms__max-10-elements__with-flags.txt",
+        "../datasets/datasets_2025/1T-kbs__max-3-atoms__max-10-elements__with-flags_HIGH_CONJUNCTION.txt",
+        "../datasets/datasets_2025/1T-kbs__max-6-atoms__max-5-elements__with-flags.txt",
+        "../datasets/datasets_2025/1T-kbs__max-6-atoms__max-5-elements__with-flags_HIGH_CONJUNCTION.txt"
+    ]
+    """
+
+    """
     data_set_names = [
         "../datasets/AT-measure/1T-kbs__AT-measure__max-3-atoms__max-5-elements_with-Consistency-and-UB-Flag.txt",
         "../datasets/AT-measure/1T-kbs__AT-measure__max-3-atoms__max-10-elements_with-Consistency-and-UB-Flag.txt",
@@ -329,12 +372,18 @@ if __name__ == "__main__":
         "../datasets/MI-measure/1T-kbs__MI-measure__max-9-atoms__max-10-elements_with-Consistency-Flag.txt",
         "../datasets/MI-measure/1T-kbs__MI-measure__max-9-atoms__max-15-elements_with-Consistency-Flag.txt",
     ]
+    """
 
     hpos = {
-        # "mlp": {"learning_rate": [0.01], "weight_decay": [0.001], "hidden_size": [32]},
-        "mlp": {"learning_rate": [0.001, 0.002, 0.003, 0.004, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05],
-                "weight_decay": [0.001, 0.002, 0.003, 0.004, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05],
-                "hidden_size": [2, 4, 8, 16, 32, 64, 128, 256]},
+        "mlp": {"learning_rate": [0.001, 0.002, 0.003], "weight_decay": [0.01, 0.03, 0.05], "hidden_size": [32, 64, 128]},
+        #"mlp": {"learning_rate": [0.002], "weight_decay": [0.05], "hidden_size": [128]},
+        #"mlp": {"learning_rate": [0.005], "weight_decay": [0.05], "hidden_size": [32]},
+        #"mlp": {"learning_rate": [0.003, 0.005], "weight_decay": [0.01, 0.05], "hidden_size": [256, 512]},
+        #"mlp": {"learning_rate": [0.005], "weight_decay": [0.05], "hidden_size": [512]},
+        #"mlp": {"learning_rate": [0.005], "weight_decay": [0.05], "hidden_size": [512]},
+        #"mlp": {"learning_rate": [0.001, 0.002, 0.003, 0.004, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05],
+        #        "weight_decay": [0.001, 0.002, 0.003, 0.004, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05],
+        #        "hidden_size": [2, 4, 8, 16, 32, 64, 128, 256]},
         "lr": {},
         "ridge": {"reg_strength": [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1e-0, 1e1, 1e2, 1e3, 1e4]},  # default 1.0
         "lasso": {"reg_strength": [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1e-0, 1e1, 1e2, 1e3, 1e4]}  # default 1.0
@@ -342,19 +391,25 @@ if __name__ == "__main__":
 
     for data_set_name in data_set_names:
         for mode in modes:
-            X, y = preprocess_data(data_set_name)
+            for measure in ["MI", "AT"]:
 
-            print(f'+++ Algorithm: {mode} --- Tuned: {hpo} --- Seed: {seed} +++')
+                X, y = preprocess_data(data_set_name, measure)
 
-            num_feat = 0
-            if "no_flags" in mode or "flags_model" in mode:
-                if "AT" in data_set_name:
-                    num_atoms = int(data_set_name[data_set_name.index("-atoms") - 1])
-                    num_feat = X.shape[1] - 1 - num_atoms
-                else:
-                    num_feat = X.shape[1] - 1
+                print(f'+++ Algorithm: {mode} --- Tuned: {hpo} --- Seed: {seed} +++')
 
-            if "no_flags" in mode:
-                X = X[:, 0:num_feat]
 
-            evaluate(X, y, seed, hpos, hpo, num_feat, data_set_name, mode)
+                num_feat = 0
+                if "no_flags" in mode or "flags_model" in mode:
+                    if measure == "AT":
+                        # max. number of upper-bound flags = max. number of atoms
+                        num_atoms = int(data_set_name[data_set_name.index("-atoms") - 1])
+                        # max. number of features - consistency flag - upper-bound flags
+                        num_feat = X.shape[1] - 1 - num_atoms
+                    else:
+                        # max. number of features - consistency flag
+                        num_feat = X.shape[1] - 1
+
+                if "no_flags" in mode:
+                    X = X[:, 0:num_feat]
+
+                evaluate(X, y, seed, hpos, hpo, num_feat, data_set_name, mode, measure)
