@@ -4,9 +4,7 @@
 ## Datasets
 Datasets consist of n knowledge bases(KBs), and the corresponding inconsistency degree values for the MI-measure and the AT-measure (MI-measure and AT-measure in THAT order).
 Each knowledge base is a string of the contained formulas, where each formula is separated by a whitespace.
-E.g.:
-- ("a !a a&&b !b", 3.0, 2.0)
-
+E.g.: ("a !a a&&b !b", 3.0, 2.0) shows a KB with MI-value 3 and AT-value 2.
 In some cases, flags may be added (see heuristics in paper).
 
 The knowledge bases are randomly created with the following parameters:
