@@ -2,7 +2,7 @@
 
 
 ## Datasets
-Datasets consist of n knowledge bases(KBs), and the corresponding inconsistency degree values for the MI-measure and the AT-measure.
+Datasets consist of n knowledge bases(KBs), and the corresponding inconsistency degree values for the MI-measure and the AT-measure (MI-measure and AT-measure in THAT order).
 Each knowledge base is a string of the contained formulas, where each formula is separated by a whitespace.
 E.g.:
 - ("a !a a&&b !b", 3.0, 2.0)
