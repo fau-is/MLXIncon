@@ -315,75 +315,26 @@ if __name__ == "__main__":
 
     hpo = True
     seed = 42
-    # "lr_flags_data", "lr_no_flags", "ridge_flags_data", "ridge_no_flags", "lasso_flags_data", "lasso_no_flags"
-    # "mlp_no_flags", "mlp_flags_data", "mlp_flags_model"
-    # "lr_flags_data", "lr_no_flags", "ridge_flags_data", "ridge_no_flags", "lasso_flags_data", "lasso_no_flags"
     modes = ["lr_flags_data", "lr_no_flags", "ridge_flags_data", "ridge_no_flags", "lasso_flags_data", "lasso_no_flags", "mlp_no_flags", "mlp_flags_data", "mlp_flags_model"]
     torch.manual_seed(seed)
     np.random.seed(seed=seed)
 
+
     data_set_names = [
-        "../datasets/datasets_2025_3/1T-kbs__max-9-atoms__max-15-elements__with-flags_V2.txt",
+        "../datasets/1T-kbs__max-3-atoms__max-5-elements__with-flags.txt",
+        "../datasets/1T-kbs__max-3-atoms__max-10-elements__with-flags.txt",
+        "../datasets/1T-kbs__max-3-atoms__max-15-elements__with-flags.txt",
+        "../datasets/1T-kbs__max-6-atoms__max-5-elements__with-flags.txt",
+        "../datasets/1T-kbs__max-6-atoms__max-10-elements__with-flags.txt",
+        "../datasets/1T-kbs__max-6-atoms__max-15-elements__with-flags.txt",
+        "../datasets/1T-kbs__max-9-atoms__max-5-elements__with-flags.txt",
+        "../datasets/1T-kbs__max-9-atoms__max-10-elements__with-flags.txt",
+        "../datasets/1T-kbs__max-9-atoms__max-15-elements__with-flags.txt",
     ]
 
-    """
-    data_set_names = [
-        "../datasets/datasets_2025_2/1T-kbs__max-3-atoms__max-5-elements__with-flags.txt",
-        "../datasets/datasets_2025_2/1T-kbs__max-3-atoms__max-10-elements__with-flags.txt",
-        "../datasets/datasets_2025_2/1T-kbs__max-3-atoms__max-15-elements__with-flags.txt",
-        "../datasets/datasets_2025_2/1T-kbs__max-6-atoms__max-5-elements__with-flags.txt",
-        "../datasets/datasets_2025_2/1T-kbs__max-6-atoms__max-10-elements__with-flags.txt",
-        "../datasets/datasets_2025_2/1T-kbs__max-6-atoms__max-15-elements__with-flags.txt",
-        "../datasets/datasets_2025_2/1T-kbs__max-9-atoms__max-5-elements__with-flags.txt",
-        "../datasets/datasets_2025_2/1T-kbs__max-9-atoms__max-10-elements__with-flags.txt",
-        "../datasets/datasets_2025_2/1T-kbs__max-9-atoms__max-15-elements__with-flags.txt",
-    ]
-    """
-
-    """
-        data_set_names = [
-        "../datasets/datasets_2025/1T-kbs__max-3-atoms__max-5-elements__with-flags.txt",
-        "../datasets/datasets_2025/1T-kbs__max-3-atoms__max-5-elements__with-flags_HIGH_CONJUNCTION.txt",
-        "../datasets/datasets_2025/1T-kbs__max-3-atoms__max-10-elements__with-flags.txt",
-        "../datasets/datasets_2025/1T-kbs__max-3-atoms__max-10-elements__with-flags_HIGH_CONJUNCTION.txt",
-        "../datasets/datasets_2025/1T-kbs__max-6-atoms__max-5-elements__with-flags.txt",
-        "../datasets/datasets_2025/1T-kbs__max-6-atoms__max-5-elements__with-flags_HIGH_CONJUNCTION.txt"
-    ]
-    """
-
-    """
-    data_set_names = [
-        "../datasets/AT-measure/1T-kbs__AT-measure__max-3-atoms__max-5-elements_with-Consistency-and-UB-Flag.txt",
-        "../datasets/AT-measure/1T-kbs__AT-measure__max-3-atoms__max-10-elements_with-Consistency-and-UB-Flag.txt",
-        "../datasets/AT-measure/1T-kbs__AT-measure__max-3-atoms__max-15-elements_with-Consistency-and-UB-Flag.txt",
-        "../datasets/AT-measure/1T-kbs__AT-measure__max-6-atoms__max-5-elements_with-Consistency-and-UB-Flag.txt",
-        "../datasets/AT-measure/1T-kbs__AT-measure__max-6-atoms__max-10-elements_with-Consistency-and-UB-Flag.txt",
-        "../datasets/AT-measure/1T-kbs__AT-measure__max-6-atoms__max-15-elements_with-Consistency-and-UB-Flag.txt",
-        "../datasets/AT-measure/1T-kbs__AT-measure__max-9-atoms__max-5-elements_with-Consistency-and-UB-Flag.txt",
-        "../datasets/AT-measure/1T-kbs__AT-measure__max-9-atoms__max-10-elements_with-Consistency-and-UB-Flag.txt",
-        "../datasets/AT-measure/1T-kbs__AT-measure__max-9-atoms__max-15-elements_with-Consistency-and-UB-Flag.txt",
-        "../datasets/MI-measure/1T-kbs__MI-measure__max-3-atoms__max-5-elements_with-Consistency-Flag.txt",
-        "../datasets/MI-measure/1T-kbs__MI-measure__max-3-atoms__max-10-elements_with-Consistency-Flag.txt",
-        "../datasets/MI-measure/1T-kbs__MI-measure__max-3-atoms__max-15-elements_with-Consistency-Flag.txt",
-        "../datasets/MI-measure/1T-kbs__MI-measure__max-6-atoms__max-5-elements_with-Consistency-Flag.txt",
-        "../datasets/MI-measure/1T-kbs__MI-measure__max-6-atoms__max-10-elements_with-Consistency-Flag.txt",
-        "../datasets/MI-measure/1T-kbs__MI-measure__max-6-atoms__max-15-elements_with-Consistency-Flag.txt",
-        "../datasets/MI-measure/1T-kbs__MI-measure__max-9-atoms__max-5-elements_with-Consistency-Flag.txt",
-        "../datasets/MI-measure/1T-kbs__MI-measure__max-9-atoms__max-10-elements_with-Consistency-Flag.txt",
-        "../datasets/MI-measure/1T-kbs__MI-measure__max-9-atoms__max-15-elements_with-Consistency-Flag.txt",
-    ]
-    """
 
     hpos = {
         "mlp": {"learning_rate": [0.001, 0.002, 0.003], "weight_decay": [0.01, 0.03, 0.05], "hidden_size": [32, 64, 128]},
-        #"mlp": {"learning_rate": [0.002], "weight_decay": [0.05], "hidden_size": [128]},
-        #"mlp": {"learning_rate": [0.005], "weight_decay": [0.05], "hidden_size": [32]},
-        #"mlp": {"learning_rate": [0.003, 0.005], "weight_decay": [0.01, 0.05], "hidden_size": [256, 512]},
-        #"mlp": {"learning_rate": [0.005], "weight_decay": [0.05], "hidden_size": [512]},
-        #"mlp": {"learning_rate": [0.005], "weight_decay": [0.05], "hidden_size": [512]},
-        #"mlp": {"learning_rate": [0.001, 0.002, 0.003, 0.004, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05],
-        #        "weight_decay": [0.001, 0.002, 0.003, 0.004, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05],
-        #        "hidden_size": [2, 4, 8, 16, 32, 64, 128, 256]},
         "lr": {},
         "ridge": {"reg_strength": [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1e-0, 1e1, 1e2, 1e3, 1e4]},  # default 1.0
         "lasso": {"reg_strength": [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1e-0, 1e1, 1e2, 1e3, 1e4]}  # default 1.0

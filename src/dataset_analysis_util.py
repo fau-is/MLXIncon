@@ -2,7 +2,7 @@ import pandas as pd
 from scipy.stats import entropy
 
 # Read the text file
-with open('../datasets/MI-measure/1T-kbs__MI-measure__max-9-atoms__max-15-elements-with-Consistency-Flag.txt', 'r') as file:
+with open('../datasets/1T-kbs__max-3-atoms__max-5-elements__with-flags.txt', 'r') as file:
     lines = file.readlines()
 
 

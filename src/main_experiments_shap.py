@@ -330,14 +330,11 @@ if __name__ == "__main__":
     np.random.seed(seed=seed)
 
     data_set_names = [
-        "../datasets/MI-measure/1T-kbs__MI-measure__max-3-atoms__max-5-elements_with-Consistency-Flag.txt",
+        "../datasets/MI-measure/1T-kbs__max-3-atoms__max-5-elements__with-flags",
     ]
 
     hpos = {
-        "mlp": {"learning_rate": [0.001], "weight_decay": [0.001], "hidden_size": [32]},
-        # "mlp": {"learning_rate": [0.001, 0.002, 0.003, 0.004, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05],
-        #        "weight_decay": [0.001, 0.002, 0.003, 0.004, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05],
-        #        "hidden_size": [2, 4, 8, 16, 32, 64, 128, 256]},
+        "mlp": {"learning_rate": [0.001, 0.002, 0.003], "weight_decay": [0.001, 0.003, 0.005], "hidden_size": [32, 64, 128]},
         "lr": {},
         "ridge": {"reg_strength": [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1e-0, 1e1, 1e2, 1e3, 1e4]},  # default 1.0
         "lasso": {"reg_strength": [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1e-0, 1e1, 1e2, 1e3, 1e4]}  # default 1.0
